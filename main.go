@@ -9,12 +9,13 @@ import (
 	eventsender "github.com/mrrizal/sample-api/event_sender"
 	"github.com/mrrizal/sample-api/model"
 	"github.com/mrrizal/sample-api/utils"
+
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/trace/jaeger"
+	"go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
-	"go.opentelemetry.io/otel/sdk/trace"
-	"go.opentelemetry.io/otel/semconv"
+	tracesdk "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -81,25 +82,31 @@ func iniTrace() {
 	jaegerEndpoint := os.Getenv("JAEGER_ENDPOINT")
 	serviceName := os.Getenv("SERVICE_NAME")
 
-	jaegerExporter, err := jaeger.NewRawExporter(
-		jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(jaegerEndpoint)),
+	jaegerExporter, err := jaeger.New(
+		jaeger.WithCollectorEndpoint(
+			jaeger.WithEndpoint(jaegerEndpoint),
+		),
 	)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
-	resource := resource.NewWithAttributes(semconv.ServiceNameKey.String(serviceName))
-
-	traceProvider := trace.NewTracerProvider(
-		trace.WithBatcher(jaegerExporter),
-		trace.WithResource(resource),
+	traceProvider := tracesdk.NewTracerProvider(
+		tracesdk.WithBatcher(jaegerExporter),
+		tracesdk.WithResource(
+			resource.NewWithAttributes(
+				semconv.SchemaURL,
+				semconv.ServiceName(serviceName),
+			),
+		),
 	)
 
 	otel.SetTracerProvider(traceProvider)
 	otel.SetTextMapPropagator(
 		propagation.NewCompositeTextMapPropagator(
 			propagation.TraceContext{},
-			propagation.Baggage{}))
+		),
+	)
 }
 
 func main() {
