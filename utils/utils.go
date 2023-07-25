@@ -1,12 +1,16 @@
 package utils
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
+	"os"
 	"time"
 
 	"github.com/bxcodec/faker/v3"
 	"github.com/mrrizal/sample-api/model"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func GetMessageTemplate(senderName string, event *model.Event) string {
@@ -24,4 +28,9 @@ func GenerateRandomEvent() model.Event {
 	faker.FakeData(&event)
 	event.Time = time.Now().Add(-time.Duration(rand.Intn(1440-1)+1) * time.Minute)
 	return event
+}
+
+func StartTracerSpan(ctx context.Context, spanName string) (context.Context, trace.Span) {
+	tracer := otel.GetTracerProvider().Tracer(os.Getenv("SERVICE_NAME"))
+	return tracer.Start(ctx, spanName)
 }
