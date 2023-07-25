@@ -27,19 +27,19 @@ var (
 		[]string{"method", "endpoint", "status_code"},
 	)
 
-	HTTPDurationSummary = prometheus.NewSummaryVec(
-		prometheus.SummaryOpts{
-			Name:       "http_request_duration_summary_seconds",
-			Help:       "Summary of HTTP request durations.",
-			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
-		},
-		[]string{"method", "status_code"},
-	)
+	// HTTPDurationSummary = prometheus.NewSummaryVec(
+	// 	prometheus.SummaryOpts{
+	// 		Name:       "http_request_duration_summary_seconds",
+	// 		Help:       "Summary of HTTP request durations.",
+	// 		Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
+	// 	},
+	// 	[]string{"method", "endpoint", "status_code"},
+	// )
 )
 
 func InitMetric() {
 	prometheus.MustRegister(ActiveConnections)
 	prometheus.MustRegister(HTTPRequestsTotal)
 	prometheus.MustRegister(HTTPDurationHistogram)
-	prometheus.MustRegister(HTTPDurationSummary)
+	// prometheus.MustRegister(HTTPDurationSummary)
 }
