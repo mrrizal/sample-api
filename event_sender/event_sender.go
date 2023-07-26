@@ -23,7 +23,12 @@ func (k *KinesisSender) Send(ctx context.Context, event model.Event) error {
 	_, span := utils.StartTracerSpan(ctx, "KinesisSender/Send")
 	defer span.End()
 
-	time.Sleep(utils.RandomDuration(50, 500) * time.Millisecond)
+	if event.Name == "like" {
+		time.Sleep(utils.RandomDuration(300, 700) * time.Millisecond)
+	} else {
+		time.Sleep(utils.RandomDuration(50, 500) * time.Millisecond)
+	}
+
 	log.Println(utils.GetMessageTemplate("kinesis", &event))
 	return nil
 }
@@ -38,7 +43,12 @@ func (s *SQSSender) Send(ctx context.Context, event model.Event) error {
 	_, span := utils.StartTracerSpan(ctx, "SQSSender/Send")
 	defer span.End()
 
-	time.Sleep(utils.RandomDuration(50, 500) * time.Millisecond)
+	if event.Name == "like" {
+		time.Sleep(utils.RandomDuration(300, 700) * time.Millisecond)
+	} else {
+		time.Sleep(utils.RandomDuration(50, 500) * time.Millisecond)
+	}
+
 	log.Println(utils.GetMessageTemplate("sqs", &event))
 	return nil
 }
@@ -53,7 +63,12 @@ func (a *APISender) Send(ctx context.Context, event model.Event) error {
 	_, span := utils.StartTracerSpan(ctx, "APISender/Send")
 	defer span.End()
 
-	time.Sleep(utils.RandomDuration(50, 500) * time.Millisecond)
+	if event.Name == "like" {
+		time.Sleep(utils.RandomDuration(300, 700) * time.Millisecond)
+	} else {
+		time.Sleep(utils.RandomDuration(50, 500) * time.Millisecond)
+	}
+
 	log.Println(utils.GetMessageTemplate("api", &event))
 	return nil
 }
