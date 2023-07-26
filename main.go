@@ -3,9 +3,9 @@ package main
 import (
 	eventsender "github.com/mrrizal/sample-api/event_sender"
 	"github.com/mrrizal/sample-api/handler"
-	"github.com/mrrizal/sample-api/middleware"
 	"github.com/mrrizal/sample-api/observer"
 	"github.com/mrrizal/sample-api/service"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/gofiber/fiber/v2"
@@ -13,8 +13,12 @@ import (
 )
 
 func main() {
+	// tracker
 	observer.InitTracer()
-	observer.InitMetric()
+
+	// Meter
+	reg := prometheus.NewRegistry()
+	metrics := observer.NewMetrics(reg)
 
 	senders := []eventsender.EventSender{
 		eventsender.NewAPISender(),
@@ -23,14 +27,15 @@ func main() {
 	}
 	eventService := service.NewEventService(senders)
 	eventHandler := handler.NewEventHandler(eventService)
+	metricHandler := handler.NewMetricHandler(metrics)
 
 	app := fiber.New()
 
-	metricMiddleware := middleware.HTTPHandlerWithMetrics
-	app.Get("/metrics", adaptor.HTTPHandler(promhttp.Handler()))
+	app.Post("/v1/api/like", metricHandler.HTTPHandlerWithMetrics(eventHandler.Like))
+	app.Post("/v1/api/unlike", metricHandler.HTTPHandlerWithMetrics(eventHandler.Unlike))
 
-	app.Post("/v1/api/like", metricMiddleware(eventHandler.Like))
-	app.Post("/v1/api/unlike", metricMiddleware(eventHandler.Unlike))
+	app.Get("/metrics", adaptor.HTTPHandler(
+		promhttp.HandlerFor(reg, promhttp.HandlerOpts{Registry: reg})))
 
 	err := app.Listen(":80")
 	if err != nil {
