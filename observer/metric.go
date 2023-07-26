@@ -11,7 +11,7 @@ type Metrics struct {
 	DurationSummary    *prometheus.SummaryVec
 }
 
-func NewMetrics(reg prometheus.Registerer) *Metrics {
+func InitMetrics(reg prometheus.Registerer) *Metrics {
 	activeConnections := prometheus.NewGauge(
 		prometheus.GaugeOpts{
 			Name: "active_connections",

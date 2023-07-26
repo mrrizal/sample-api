@@ -18,7 +18,7 @@ func main() {
 
 	// Meter
 	reg := prometheus.NewRegistry()
-	metrics := observer.NewMetrics(reg)
+	metrics := observer.InitMetrics(reg)
 
 	senders := []eventsender.EventSender{
 		eventsender.NewAPISender(),
