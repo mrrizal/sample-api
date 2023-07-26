@@ -10,4 +10,6 @@ services:
     environment:
       - JAEGER_ENDPOINT=http://host.docker.internal:14268/api/traces
       - SERVICE_NAME=sample-api
+    mem_limit: 128m
+    cpus: 0.3
     restart: always
