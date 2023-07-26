@@ -25,7 +25,11 @@ func main() {
 		eventsender.NewKinesisSender(),
 		eventsender.NewSQSSender(),
 	}
-	eventService := service.NewEventService(senders)
+	senderProcessing := eventsender.NewEventSenderProcessing()
+	senderProcessing.StartProcessing()
+	defer senderProcessing.StopProcessing()
+
+	eventService := service.NewEventService(senders, senderProcessing)
 	eventHandler := handler.NewEventHandler(eventService)
 	metricHandler := handler.NewMetricHandler(metrics)
 

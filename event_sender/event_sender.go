@@ -3,6 +3,7 @@ package eventsender
 import (
 	"context"
 	"log"
+	"sync"
 	"time"
 
 	"github.com/mrrizal/sample-api/model"
@@ -71,4 +72,61 @@ func (a *APISender) Send(ctx context.Context, event model.Event) error {
 
 	log.Println(utils.GetMessageTemplate("api", &event))
 	return nil
+}
+
+type EventData struct {
+	Ctx     context.Context
+	Senders []EventSender
+	Event   model.Event
+}
+
+type EventSenderProcessing struct {
+	queue chan EventData
+	wg    sync.WaitGroup
+}
+
+func NewEventSenderProcessing() EventSenderProcessing {
+	return EventSenderProcessing{
+		queue: make(chan EventData, 50),
+	}
+}
+
+func (e *EventSenderProcessing) StartProcessing() {
+	nWorker := 100
+	for i := 0; i < nWorker; i++ {
+		e.wg.Add(1)
+		go e.Worker()
+	}
+}
+
+func (e *EventSenderProcessing) StopProcessing() {
+	close(e.queue)
+	e.wg.Wait()
+}
+
+func (e *EventSenderProcessing) Worker() {
+	defer e.wg.Done()
+	for data := range e.queue {
+		var wg sync.WaitGroup
+		senders := data.Senders
+		for _, sender := range senders {
+			wg.Add(1)
+			go func(wg *sync.WaitGroup, sender EventSender) {
+				defer wg.Done()
+				err := sender.Send(data.Ctx, data.Event)
+				if err != nil {
+					log.Printf("Error: %s\n", err.Error())
+				}
+			}(&wg, sender)
+		}
+		wg.Wait()
+	}
+}
+
+func (e *EventSenderProcessing) Send(ctx context.Context, senders []EventSender, event model.Event) {
+	e.queue <- EventData{
+		Ctx:     ctx,
+		Senders: senders,
+		Event:   event,
+	}
 }
