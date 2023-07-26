@@ -92,7 +92,7 @@ func NewEventSenderProcessing() EventSenderProcessing {
 }
 
 func (e *EventSenderProcessing) StartProcessing() {
-	nWorker := 100
+	nWorker := 437
 	for i := 0; i < nWorker; i++ {
 		e.wg.Add(1)
 		go e.Worker()
