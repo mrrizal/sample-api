@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"runtime"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/mrrizal/sample-api/observer"
@@ -18,16 +19,25 @@ func NewMetricHandler(metrics *observer.Metrics) MetricHandler {
 
 func (m *MetricHandler) HTTPHandlerWithMetrics(handler func(*fiber.Ctx) error) func(*fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
-		// Increment the counter for the incoming request.
+		// Increment the counter for the incoming request. this is for total request
 		m.metrics.RequestsTotal.WithLabelValues(c.Route().Method, c.Route().Path).Inc()
 
-		// Start recording the duration of the request processing.
+		// Start recording the duration of the request processing. this is for duration/historgram
 		timer := prometheus.NewTimer(
 			m.metrics.DurationHistorgram.WithLabelValues(c.Route().Method, c.Route().Path, ""), // Empty status_code for now.
 		)
 
+		// this is for memory usage monitoring
+		startMemoryStats := new(runtime.MemStats)
+		runtime.ReadMemStats(startMemoryStats)
+
 		// // Execute the actual HTTP handler and wait for the response.
 		err := handler(c)
+
+		endMemoryStats := new(runtime.MemStats)
+		runtime.ReadMemStats(endMemoryStats)
+
+		allocatedMemory := endMemoryStats.TotalAlloc - startMemoryStats.TotalAlloc
 
 		// Stop the timer after the actual handler has completed its work.
 		timer.ObserveDuration()
@@ -40,6 +50,10 @@ func (m *MetricHandler) HTTPHandlerWithMetrics(handler func(*fiber.Ctx) error) f
 			fmt.Sprintf("%d", statusCode)).
 			Observe(timer.ObserveDuration().Seconds())
 
+		// send memory usage to metrics endpoint
+		m.metrics.MemoryUsage.WithLabelValues(c.Route().Method, c.Route().Path).Set(
+			float64(allocatedMemory),
+		)
 		return err
 	}
 }

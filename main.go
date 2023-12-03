@@ -33,6 +33,8 @@ func main() {
 
 	app.Post("/v1/api/like", metricHandler.HTTPHandlerWithMetrics(eventHandler.Like))
 	app.Post("/v1/api/unlike", metricHandler.HTTPHandlerWithMetrics(eventHandler.Unlike))
+	app.Get("/v1/api/dummy-endpoint", metricHandler.HTTPHandlerWithMetrics(eventHandler.DummyEndpoint))
+	app.Get("/v1/api/dummy-endpoint-1", metricHandler.HTTPHandlerWithMetrics(eventHandler.DummyEndpoint1))
 
 	app.Get("/metrics", adaptor.HTTPHandler(
 		promhttp.HandlerFor(reg, promhttp.HandlerOpts{Registry: reg})))

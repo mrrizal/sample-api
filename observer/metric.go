@@ -9,6 +9,7 @@ type Metrics struct {
 	RequestsTotal      *prometheus.CounterVec
 	DurationHistorgram *prometheus.HistogramVec
 	DurationSummary    *prometheus.SummaryVec
+	MemoryUsage        *prometheus.GaugeVec
 }
 
 func InitMetrics(reg prometheus.Registerer) *Metrics {
@@ -45,16 +46,26 @@ func InitMetrics(reg prometheus.Registerer) *Metrics {
 		[]string{"method", "endpoint", "status_code"},
 	)
 
+	memoryUsage := prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "app_memory_usage_bytes",
+			Help: "Current memory usage of the application in bytes.",
+		},
+		[]string{"endpoint", "method"},
+	)
+
 	metrics := &Metrics{
 		ActiveConnections:  &activeConnections,
 		RequestsTotal:      requestsTotal,
 		DurationHistorgram: durationHistogram,
 		DurationSummary:    durationSummary,
+		MemoryUsage:        memoryUsage,
 	}
 
 	reg.MustRegister(*metrics.ActiveConnections)
 	reg.MustRegister(metrics.RequestsTotal)
 	reg.MustRegister(metrics.DurationHistorgram)
 	reg.MustRegister(metrics.DurationSummary)
+	reg.MustRegister(metrics.MemoryUsage)
 	return metrics
 }
